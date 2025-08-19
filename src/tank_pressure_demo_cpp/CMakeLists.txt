@@ -70,7 +70,14 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
+# headers
 install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION include/${PROJECT_NAME})
+  DESTINATION include/${PROJECT_NAME}
+)
+
+# launch files
+install(DIRECTORY launch/
+  DESTINATION share/${PROJECT_NAME}/launch
+)
 
 ament_package()
