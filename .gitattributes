@@ -1,0 +1,7 @@
+* text=auto eol=lf
+*.sh text eol=lf
+*.bash text eol=lf
+*.py text eol=lf
+*.action text eol=lf
+*.msg text eol=lf
+*.srv text eol=lf

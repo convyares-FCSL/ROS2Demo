@@ -1,0 +1,7 @@
+tank_pressure_pub_cpp:
+  ros__parameters:
+    topic: "tank_pressure_bar"
+    mean_bar: 705.0
+    jitter_bar: 15.0
+    period_ms: 250
+    bank_id: "BankB"

@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>tank_pressure_demo_cpp</name>
+  <version>0.0.1</version>
+  <description>Tank pressure demo: publisher, compressor service, scheduler, and FillToTarget action server/client.</description>
+
+  <maintainer email="carl@example.com">Carl</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <depend>rcl_interfaces</depend>
+  <depend>std_srvs</depend>
+  <depend>rclcpp_action</depend>
+  <depend>action_msgs</depend>
+
+  <!-- NEW: depend on the interfaces package -->
+  <depend>hyfleet_interfaces</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
