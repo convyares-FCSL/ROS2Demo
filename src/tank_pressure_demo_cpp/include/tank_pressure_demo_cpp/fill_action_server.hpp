@@ -1,40 +1,53 @@
-#ifndef FILL_ACTION_SERVER_HPP_
-#define FILL_ACTION_SERVER_HPP_
+#pragma once
 
-#include <rclcpp/rclcpp.hpp>
-#include <rclcpp_action/rclcpp_action.hpp>
-#include <std_msgs/msg/float32.hpp>
-#include <hyfleet_interfaces/action/fill_to_target.hpp>
+#include <chrono>
+#include <memory>
+#include "std_msgs/msg/float64.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "rclcpp_action/rclcpp_action.hpp"
+#include "hyfleet_interfaces/action/fill_to_target.hpp"
 
-namespace tank_pressure_demo_cpp {
-
-using FillToTarget = hyfleet_interfaces::action::FillToTarget;
-using GoalHandleFillToTarget = rclcpp_action::ServerGoalHandle<FillToTarget>;
-
-class FillActionServer : public rclcpp::Node {
+class FillActionServer : public rclcpp::Node
+{
 public:
+  using FillToTarget = hyfleet_interfaces::action::FillToTarget;
+  using GoalHandle   = rclcpp_action::ServerGoalHandle<FillToTarget>;
+
   FillActionServer();
 
 private:
-  // Member variables
-  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr sub_;
-  rclcpp_action::Server<FillToTarget>::SharedPtr server_;
-  float current_pressure_{0.0f};
+  // Action
+  rclcpp_action::Server<FillToTarget>::SharedPtr actionServer_;
+  std::shared_ptr<GoalHandle> activeGoal_;
 
-  // Action server callbacks
-  rclcpp_action::GoalResponse handle_goal_(
-    const rclcpp_action::GoalUUID& uuid,
+  // Ramp timer
+  rclcpp::TimerBase::SharedPtr rampTimer_;
+  rclcpp::Time startTime_;
+
+  // Goal + state
+  double targetBar_   = 0.0;
+  double currentBar_  = 0.0;
+  bool   goalActive_  = false;
+
+  // Params
+  double startBar_    = 96.0;
+  double rampBarPerS_ = 1.0;
+  int    tickMs_      = 100;
+  double aprrMpaPerMin_ = -1.0;  // disabled when < 0
+
+  // Action callbacks
+  rclcpp_action::GoalResponse handleGoal(
+    const rclcpp_action::GoalUUID &,
     std::shared_ptr<const FillToTarget::Goal> goal);
-    
-  rclcpp_action::CancelResponse handle_cancel_(
-    const std::shared_ptr<GoalHandleFillToTarget> goal_handle);
-    
-  void execute_(const std::shared_ptr<GoalHandleFillToTarget> goal_handle);
 
-  // Subscription callback
-  void pressure_callback_(const std_msgs::msg::Float32::SharedPtr msg);
+  rclcpp_action::CancelResponse handleCancel(const std::shared_ptr<GoalHandle> goal_handle);
+  void handleAccepted(const std::shared_ptr<GoalHandle> goal_handle);
+
+  // Ramp loop
+  void startRamp();
+  void stopRamp();
+  void onRampTick();
+
+  // Publisher
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pressurePub_;
 };
-
-} // namespace tank_pressure_demo_cpp
-
-#endif  // FILL_ACTION_SERVER_HPP_

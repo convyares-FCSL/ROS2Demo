@@ -1,7 +1,6 @@
 #include "tank_pressure_demo_cpp/fill_action_client.hpp"
 
 #include <chrono>
-#include <functional>
 #include <memory>
 #include <string>
 
@@ -14,7 +13,8 @@ FillActionClient::FillActionClient(float target_bar)
   goal_.target_bar = target_bar;
 }
 
-void FillActionClient::send_goal() {
+void FillActionClient::send_goal()
+{
   if (!client_->wait_for_action_server(5s)) {
     RCLCPP_ERROR(get_logger(), "Action server not available");
     rclcpp::shutdown();
@@ -22,8 +22,20 @@ void FillActionClient::send_goal() {
   }
 
   rclcpp_action::Client<Fill>::SendGoalOptions opts;
+
+  // Correct signature: shared_ptr<GoalHandleFill>
+  opts.goal_response_callback =
+    [this](GoalHandleFill::SharedPtr gh) {
+      if (!gh) {
+        RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
+      } else {
+        RCLCPP_INFO(this->get_logger(), "Goal accepted by server");
+      }
+    };
+
   opts.feedback_callback = std::bind(&FillActionClient::feedback_cb_, this,
                                      std::placeholders::_1, std::placeholders::_2);
+
   opts.result_callback   = std::bind(&FillActionClient::result_cb_, this,
                                      std::placeholders::_1);
 
@@ -41,12 +53,14 @@ void FillActionClient::result_cb_(const GoalHandleFill::WrappedResult & result)
 {
   const auto & res = result.result;
   RCLCPP_INFO(get_logger(), "Result (%d): %s (final=%.1f bar)",
-              static_cast<int>(result.code), res->message.c_str(), res->final_pressure_bar);
-  // Optional: shutdown after first goal completes
+              static_cast<int>(result.code),
+              res ? res->message.c_str() : "<no message>",
+              res ? res->final_pressure_bar : -1.0);
   rclcpp::shutdown();
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
   rclcpp::init(argc, argv);
   float target = 705.0f;
   if (argc > 1) {
@@ -55,5 +69,6 @@ int main(int argc, char** argv) {
   auto node = std::make_shared<FillActionClient>(target);
   node->send_goal();
   rclcpp::spin(node);
+  rclcpp::shutdown();
   return 0;
 }
