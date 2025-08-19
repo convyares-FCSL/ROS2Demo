@@ -1,116 +1,59 @@
-# Tank Pressure Demo (C++)
+# ROS 2 Tank Pressure Demo (Actions)
 
-This ROS 2 package provides a simple demo simulating tank pressure publishing and compressor control using publishers, parameters, and services.
+This repo demonstrates a ROS 2 **Action** workflow for a “fill to target pressure” process, with C++ nodes and small Python utilities.
 
-## Build Instructions
+## Packages
+- `hyfleet_interfaces` — custom action: `FillToTarget`
+- `tank_pressure_demo_cpp` — C++ action **server** and **client**
+- `tank_pressure_tools_py` — Python **logger** and **plotter**
 
+## Build
 ```bash
-docker exec -it rosdev bash
-
+source /opt/ros/jazzy/setup.bash
 cd ~/ros2_ws
-colcon build --packages-select tank_pressure_demo_cpp --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
+colcon build --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
 source install/setup.bash
 ```
 
-## Run Instructions
-
+## Run (launch server + logger + client)
 ```bash
-docker exec -it rosdev sh
-cd opt/ros/jazzy
-
-source /opt/ros/jazzy/setup.bash
+ros2 launch tank_pressure_demo_cpp action_demo.launch.py
 ```
 
-### Pressure Publisher
+The launch starts:
+- `fill_action_server` with params (defaults shown in `launch/action_demo.launch.py`)
+- `pressure_logger` writing `/tmp/tank_pressure.csv`
+- `fill_action_client` sending a goal (default target 705 bar)
 
+### Parameters (server)
+- `start_bar` (double) — initial tank pressure (bar)
+- `ramp_bar_per_s` (double) — ramp rate (bar/s)
+- `aprr_mpa_per_min` (double) — APRR in MPa/min; if >0, overrides `ramp_bar_per_s`
+- `tick_ms` (int) — control loop period (ms)
+
+Set at runtime:
 ```bash
-ros2 run tank_pressure_demo_cpp pressure_publisher
+ros2 param set /fill_action_server ramp_bar_per_s 1.5
+ros2 param set /fill_action_server tick_ms 50
 ```
 
-### Pressure Subscriber
-
+### Manual run (without launch)
 ```bash
-ros2 run tank_pressure_demo_cpp pressure_subscriber
+# Terminal A — server
+ros2 run tank_pressure_demo_cpp fill_action_server --ros-args   -p start_bar:=96.0 -p aprr_mpa_per_min:=1.5 -p tick_ms:=100
+
+# Terminal B — client
+ros2 run tank_pressure_demo_cpp fill_action_client 705.0
 ```
 
-### Compressor Service
+### Telemetry
+- Topic: `/tank_pressure` (`std_msgs/Float64`)
+- CSV: `/tmp/tank_pressure.csv` via `pressure_logger`
+- Plot: use PlotJuggler (ROS2 Streaming → subscribe to `/tank_pressure`)
 
-```bash
-ros2 run tank_pressure_demo_cpp compressor_service
-```
+### Development notes
+- Control path is C++ (actions/timer). Tooling (logging/plotting) is Python for speed.
+- Server enforces single active goal; supports feedback + (soon) cancel/abort.
 
----
-
-## Parameters
-
-The **publisher** supports runtime-configurable parameters:
-
-- **bank\_id** *(string)*: Which bank is being simulated (`BankA`, `BankB`, `BankC`).
-- **start\_bar** *(double)*: Starting tank pressure (bar).
-- **jitter\_bar** *(double)*: Random jitter added to the pressure value. Must be `>= 0`.
-- **period\_ms** *(int)*: Publish period in milliseconds. Must be `> 0`.
-
-### Inspect Parameters
-
-```bash
-ros2 param list /tank_pressure_pub_cpp
-ros2 param get /tank_pressure_pub_cpp bank_id
-```
-
-### Update Parameters at Runtime
-
-```bash
-ros2 param set /tank_pressure_pub_cpp bank_id BankB
-ros2 param set /tank_pressure_pub_cpp jitter_bar 5.0
-ros2 param set /tank_pressure_pub_cpp period_ms 1000
-```
-
----
-
-## Services
-
-The **compressor service** provides three ROS 2 services:
-
-- **/start\_compressor** (`std_srvs/srv/SetBool`)\
-  Start (`data: true`) or stop (`data: false`) the compressor.
-
-- **/fault\_interlock** (`std_srvs/srv/Trigger`)\
-  Force the interlock into a faulted state. Prevents compressor state changes until reset.
-
-- **/reset\_interlock** (`std_srvs/srv/Trigger`)\
-  Reset the interlock fault to allow compressor operation again.
-
-### Example Calls
-
-Start the compressor:
-
-```bash
-ros2 service call /start_compressor std_srvs/srv/SetBool "{data: true}"
-```
-
-Stop the compressor:
-
-```bash
-ros2 service call /start_compressor std_srvs/srv/SetBool "{data: false}"
-```
-
-Trigger an interlock fault:
-
-```bash
-ros2 service call /fault_interlock std_srvs/srv/Trigger "{}"
-```
-
-Reset the interlock fault:
-
-```bash
-ros2 service call /reset_interlock std_srvs/srv/Trigger "{}"
-```
-
-Check available services:
-
-```bash
-ros2 service list | grep compressor
-```
-
-
-
+## Legacy demo (publisher/service)
+See `README_pubsub.md` for the older pub/sub/service nodes.
