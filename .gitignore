@@ -1,28 +1,30 @@
-# colcon/ament build outputs
+# colcon/ament build artifacts
 build/
 install/
 log/
 
-# colcon test logs
-*.pytest_cache/
-*.pyc
+# VS Code & editors
+.vscode/
+.idea/
+*.code-workspace
+
+# Python cache (if any Python tools/scripts)
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
 
-# ROS 2 generated artifacts (in-tree codegen, if any)
-**/rosidl_generator_*/*
-**/rosidl_typesupport_*/*
-
-# CMake cruft
-CMakeCache.txt
+# CMake and compilation
 CMakeFiles/
+CMakeCache.txt
 cmake_install.cmake
 Makefile
 compile_commands.json
 
-# VS Code
-.vscode/
-.history/
-
-# OS junk
+# OS cruft
 .DS_Store
 Thumbs.db
+
+# Misc
+.colcon/
