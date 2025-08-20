@@ -1,0 +1,25 @@
+FROM ros:jazzy-ros-base
+
+# Use bash for RUN
+SHELL ["/bin/bash", "-c"]
+
+# Install dev and GUI tools we use
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    python3-pip \
+    python3-colcon-common-extensions \
+    python3-matplotlib \
+    ros-jazzy-plotjuggler-ros \
+    ros-jazzy-rmw-cyclonedds-cpp \
+    ros-jazzy-cyclonedds \
+ && rm -rf /var/lib/apt/lists/*
+
+# Default to CycloneDDS (you can override at runtime)
+ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
+# Auto-source ROS and workspace on shell start
+RUN echo 'source /opt/ros/jazzy/setup.bash' >> /root/.bashrc && \
+    echo 'if [ -f /root/ros2_ws/install/setup.bash ]; then source /root/ros2_ws/install/setup.bash; fi' >> /root/.bashrc
+
+WORKDIR /root/ros2_ws

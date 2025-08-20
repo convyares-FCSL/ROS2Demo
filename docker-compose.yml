@@ -1,0 +1,19 @@
+services:
+  rosdev:
+    build:
+      context: .
+      dockerfile: Dockerfile.rosdev
+    container_name: rosdev
+    network_mode: host
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - DISPLAY=${DISPLAY}
+      - WAYLAND_DISPLAY=${WAYLAND_DISPLAY}
+      - XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}
+      - PULSE_SERVER=${PULSE_SERVER}
+    volumes:
+      - ~/ros2_ws:/root/ros2_ws
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /mnt/wslg:/mnt/wslg
+    stdin_open: true
+    tty: true
