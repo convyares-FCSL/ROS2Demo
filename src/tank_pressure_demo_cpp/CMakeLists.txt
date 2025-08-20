@@ -72,12 +72,13 @@ install(TARGETS
 
 # headers
 install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION include/${PROJECT_NAME}
-)
+  DESTINATION include/${PROJECT_NAME})
 
 # launch files
 install(DIRECTORY launch/
-  DESTINATION share/${PROJECT_NAME}/launch
-)
+  DESTINATION share/${PROJECT_NAME}/launch)
+
+install(DIRECTORY config/
+  DESTINATION share/${PROJECT_NAME}/config)
 
 ament_package()
