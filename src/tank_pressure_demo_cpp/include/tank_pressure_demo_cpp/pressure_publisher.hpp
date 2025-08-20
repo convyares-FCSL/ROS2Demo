@@ -4,6 +4,9 @@
 #include <rcl_interfaces/msg/set_parameters_result.hpp>   // needed in header
 #include <random>
 #include <string>
+#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <diagnostic_updater/publisher.hpp>
+
 
 namespace tpd {
 
@@ -54,6 +57,13 @@ private:
   rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr pub_;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr param_cb_;
+
+  // ---- diagnostics ----
+  diagnostic_updater::Updater diag_updater_; 
+  double sp1_warn_bar_{200.0};
+  double sp2_error_bar_{300.0};
+  double last_pressure_bar_{0.0};
+  void diagnosticsCb_(diagnostic_updater::DiagnosticStatusWrapper & stat);
 };
 
 } // namespace tpd

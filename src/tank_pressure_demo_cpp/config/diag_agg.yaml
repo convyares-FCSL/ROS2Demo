@@ -1,0 +1,12 @@
+# src/tank_pressure_demo_cpp/config/diag_agg.yaml
+/**:
+  ros__parameters:
+    pub_rate: 5.0
+    base_path: ""
+    analyzers:
+      sensors:
+        type: "diagnostic_aggregator/GenericAnalyzer"
+        path: "Sensors"
+        contains:
+          - "pressure_publisher"
+        timeout: 5.0

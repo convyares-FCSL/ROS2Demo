@@ -6,7 +6,9 @@
       "mean_bar": 96.0,
       "jitter_bar": 0.5,
       "period_ms": 100,
-      "bank_id": "Bank1"
+      "bank_id": "BankA",
+      "sp1_warn_bar": 100.0,
+      "sp2_error_bar": 110.0
     }
   },
   {
@@ -16,7 +18,9 @@
       "mean_bar": 150.0,
       "jitter_bar": 0.5,
       "period_ms": 100,
-      "bank_id": "Bank2"
+      "bank_id": "BankB",
+      "sp1_warn_bar": 155.0,
+      "sp2_error_bar": 165.0
     }
   }
 ]

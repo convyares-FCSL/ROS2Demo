@@ -13,12 +13,13 @@ TankPressurePublisher::TankPressurePublisher(const PressureConfig& cfg, BankId b
   cfg_(cfg),
   bank_(bank),
   gen_(rd_()),
-  dist_(-cfg.jitter_bar, cfg.jitter_bar)
+  dist_(-cfg.jitter_bar, cfg.jitter_bar),
+  diag_updater_(this)
 {
-  declareStaticParams_();
-  loadParamsOnce_();
-  setupPublisherAndTimer_();
-  installParamCallback_();
+    declareStaticParams_();
+    loadParamsOnce_();
+    setupPublisherAndTimer_();
+    installParamCallback_();
 }
 
 void TankPressurePublisher::declareStaticParams_() {
@@ -45,12 +46,19 @@ void TankPressurePublisher::declareStaticParams_() {
   rcl_interfaces::msg::ParameterDescriptor d_bank;
   d_bank.name = ParameterKeys::bank_id;
 
+  rcl_interfaces::msg::ParameterDescriptor d_sp1;
+  d_sp1.name = "sp1_warn_bar";
+
+rcl_interfaces::msg::ParameterDescriptor d_sp2;
+  d_sp2.name = "sp2_error_bar";
+
   this->declare_parameter<std::string>(ParameterKeys::topic, cfg_.topic, d_topic);
   this->declare_parameter<double>(ParameterKeys::mean_bar, cfg_.mean_bar, d_mean);
   this->declare_parameter<double>(ParameterKeys::jitter_bar, cfg_.jitter_bar, d_jitter);
-  this->declare_parameter<int>(ParameterKeys::period_ms,
-                               static_cast<int>(cfg_.period.count()), d_period);
+  this->declare_parameter<int>(ParameterKeys::period_ms, static_cast<int>(cfg_.period.count()), d_period);
   this->declare_parameter<std::string>(ParameterKeys::bank_id, "BankA", d_bank);
+  this->declare_parameter<double>("sp1_warn_bar", 200.0, d_sp1);   // default
+  this->declare_parameter<double>("sp2_error_bar", 300.0, d_sp2);  // default
 }
 
 void TankPressurePublisher::loadParamsOnce_() {
@@ -58,6 +66,8 @@ void TankPressurePublisher::loadParamsOnce_() {
   cfg_.mean_bar   = static_cast<float>(this->get_parameter(ParameterKeys::mean_bar).as_double());
   cfg_.jitter_bar = static_cast<float>(this->get_parameter(ParameterKeys::jitter_bar).as_double());
   cfg_.period     = milliseconds(this->get_parameter(ParameterKeys::period_ms).as_int());
+  this->get_parameter("sp1_warn_bar", sp1_warn_bar_);
+  this->get_parameter("sp2_error_bar", sp2_error_bar_);
 
   const auto bank_str = this->get_parameter(ParameterKeys::bank_id).as_string();
   try {
@@ -83,6 +93,10 @@ void TankPressurePublisher::installParamCallback_() {
     [this](const std::vector<rclcpp::Parameter>& params) {
       return this->onParamsSet_(params);
     });
+
+    // Setup diagnostics
+    const std::string fq = std::string(get_namespace()) + "/" + std::string(get_name());
+    diag_updater_.add(fq + ": Pressure Status", this, &TankPressurePublisher::diagnosticsCb_);
 }
 
 rcl_interfaces::msg::SetParametersResult
@@ -154,11 +168,31 @@ BankId TankPressurePublisher::parseBankId_(const std::string& s) {
 }
 
 void TankPressurePublisher::tick() {
+  // Publish
   const float p = cfg_.mean_bar + dist_(gen_);
   std_msgs::msg::Float32 msg;
   msg.data = p;
   pub_->publish(msg);
+
+  // Update diagnostics
+  last_pressure_bar_ = p;        // <<< ensure this variable name matches your computation
+  diag_updater_.force_update();      // <<< FIX: call force_update(), not update()
 }
+void TankPressurePublisher::diagnosticsCb_(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  const double p = last_pressure_bar_;
+  if (p > sp2_error_bar_) {
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "Pressure above SP2");
+  } else if (p > sp1_warn_bar_) {
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::WARN, "Pressure above SP1");
+  } else {
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Pressure within limits");
+  }
+  stat.add("pressure_bar", p);
+  stat.add("sp1_warn_bar", sp1_warn_bar_);
+  stat.add("sp2_error_bar", sp2_error_bar_);
+}
+
 
 } // namespace tpd
 

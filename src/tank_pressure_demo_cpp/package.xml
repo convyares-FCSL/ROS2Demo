@@ -16,6 +16,8 @@
   <depend>std_srvs</depend>
   <depend>rclcpp_action</depend>
   <depend>action_msgs</depend>
+  <depend>diagnostic_updater</depend>
+  <depend>rclcpp_lifecycle</depend>
 
   <!-- NEW: depend on the interfaces package -->
   <depend>hyfleet_interfaces</depend>

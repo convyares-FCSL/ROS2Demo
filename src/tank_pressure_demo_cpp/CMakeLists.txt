@@ -5,13 +5,14 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 
 # -------------------- Finds --------------------
 find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(rcl_interfaces REQUIRED)
 find_package(std_srvs REQUIRED)
-
+find_package(rcl_interfaces REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(action_msgs REQUIRED)
+find_package(diagnostic_updater REQUIRED)
 
 # >>> The generated interfaces we depend on <<<
 find_package(hyfleet_interfaces REQUIRED)
@@ -20,7 +21,12 @@ find_package(hyfleet_interfaces REQUIRED)
 include_directories(include)
 
 add_executable(pressure_publisher src/pressure_publisher.cpp)
-ament_target_dependencies(pressure_publisher rclcpp std_msgs rcl_interfaces)
+ament_target_dependencies(pressure_publisher
+   rclcpp
+   std_msgs
+   rcl_interfaces
+   diagnostic_updater
+   )
 
 add_executable(pressure_subscriber src/pressure_subscriber.cpp)
 ament_target_dependencies(pressure_subscriber rclcpp std_msgs)
@@ -58,6 +64,11 @@ ament_target_dependencies(fill_action_client
   action_msgs
   hyfleet_interfaces        # <<— same here
 )
+
+add_executable(pressure_publisher_lc src/pressure_publisher_lc.cpp)
+ament_target_dependencies(pressure_publisher_lc
+  rclcpp rclcpp_lifecycle std_msgs rcl_interfaces diagnostic_updater)
+install(TARGETS pressure_publisher_lc DESTINATION lib/${PROJECT_NAME})
 
 # -------------------- Install --------------------
 install(TARGETS
